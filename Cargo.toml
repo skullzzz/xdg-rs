@@ -1,0 +1,7 @@
+[package]
+
+name = "xdg-rs"
+version = "0.0.1"
+authors = ["skullzzz <kiran.eighty9@gmail.com>"]
+description = "Utility to library to better manage the XDG spec"
+license = "MIT"
