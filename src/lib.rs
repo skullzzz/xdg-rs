@@ -1,4 +1,8 @@
 //! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier
+//!
+//! Some code borrowed from [rust-xdg](https://github.com/o11c/rust-xdg). ```rust-xdg``` is
+//! currently a more complete implementation of the specification. The APIs provided by
+//! ```rust-xdg``` and ```xdg-rs``` are different.
 
 #![feature(if_let)]
 
@@ -14,8 +18,8 @@ pub fn xdg_init() -> Result<bool, String> {
     match getenv_path("XDG_RUNTIME_DIR") {
         Some(path) => {
             match path.stat() {
-                Ok(stat_buf) => {
-                    if stat_buf.perm.intersects(io::GROUP_RWX | io::OTHER_RWX) {
+                Ok(stat) => {
+                    if stat.perm.intersects(io::GROUP_RWX | io::OTHER_RWX) {
                         Err("Incorrect permissions for $XDG_RUNTIME_DIR".to_string())
                     } else {
                         Ok(true)
