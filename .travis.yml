@@ -1,6 +1,3 @@
-env:
-    global:
-        - secure: PMjXVTYYCVRPVY54IPPvEsRbZfBwWHoUm2N6O8kCIy87JRQgp6J6WfOy1vw/DZnc8xHVJ4/G2ZBCUO5ntE36nLAbz1PI9GkhYk9t7VsvNqkQawSkY/YnvZ9Vt9QxBc3VozCCrscf+4ebMXkktffA4WbzOsdXNYSWtBVKM1KYwZc=
 language: rust
 script:
     - cargo build --verbose
@@ -13,6 +10,10 @@ after_success: |
     echo '<meta http-equiv=refresh content=0;url=toml/index.html>' > target/doc/index.html &&
     sudo pip install ghp-import &&
     ghp-import -n target/doc &&
+    git push -fq https://${TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages &&
     rm target/doc/index.html &&
     mv target/doc . &&
     (curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh)
+env:
+    global:
+        - secure: PMjXVTYYCVRPVY54IPPvEsRbZfBwWHoUm2N6O8kCIy87JRQgp6J6WfOy1vw/DZnc8xHVJ4/G2ZBCUO5ntE36nLAbz1PI9GkhYk9t7VsvNqkQawSkY/YnvZ9Vt9QxBc3VozCCrscf+4ebMXkktffA4WbzOsdXNYSWtBVKM1KYwZc=
