@@ -2,5 +2,17 @@ env:
     global:
         - secure: PMjXVTYYCVRPVY54IPPvEsRbZfBwWHoUm2N6O8kCIy87JRQgp6J6WfOy1vw/DZnc8xHVJ4/G2ZBCUO5ntE36nLAbz1PI9GkhYk9t7VsvNqkQawSkY/YnvZ9Vt9QxBc3VozCCrscf+4ebMXkktffA4WbzOsdXNYSWtBVKM1KYwZc=
 language: rust
+script:
+    - cargo build --verbose
+    - cargo test --verbose
+    - rustdoc --test README.md -L target
+    - cargo doc
 after_success: |
+    [ $TRAVIS_BRANCH = master ] &&
+    [ $TRAVIS_PULL_REQUEST = false ] &&
+    echo '<meta http-equiv=refresh content=0;url=toml/index.html>' > target/doc/index.html &&
+    sudo pip install ghp-import &&
+    ghp-import -n target/doc &&
+    rm target/doc/index.html &&
+    mv target/doc . &&
     (curl http://www.rust-ci.org/artifacts/put?t=$RUSTCI_TOKEN | sh)
