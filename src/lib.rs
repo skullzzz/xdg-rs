@@ -6,73 +6,169 @@
 
 #![feature(if_let)]
 
+use std::error::Error;
 use std::io;
 use std::io::fs::PathExtensions;
+use std::iter::IteratorExt;
 use std::os;
 
-/// Run some sanity checks for the XDG spec
+/// Get the data home directory given a closure that returns the the value of an environment variable.
+/// This method allows having a custom environment.
 ///
-/// Returns ```Ok(true)``` if $XDG_RUNTIME_DIR is founc and valid, ```Ok(false)``` if not found
-/// and ```Err(msg)``` if and error occured
-pub fn xdg_init() -> Result<bool, String> {
-    match getenv_path("XDG_RUNTIME_DIR") {
-        Some(path) => {
-            match path.stat() {
-                Ok(stat) => {
-                    if stat.perm.intersects(io::GROUP_RWX | io::OTHER_RWX) {
-                        Err("Incorrect permissions for $XDG_RUNTIME_DIR".to_string())
-                    } else {
-                        Ok(true)
-                    }
-                },
-
-                Err(_) => Ok(false)
-            }
-        },
-
-        None => Ok(false),
-    }
-}
-
-/// Get the data home directory
-///
-/// If $XDG_DATA_HOME is not set, it returns $HOME/.local/share
-pub fn get_data_home() -> Path {
-    getenv_path("XDG_DATA_HOME").unwrap_or(
-        os::homedir().unwrap().join("/.local/share")
+/// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
+pub fn get_data_home_from_env(env: |&str| -> Option<String>) -> Path {
+    getenv_path(env, "XDG_DATA_HOME").unwrap_or(
+        os::homedir().unwrap().join(".local/share")
     )
 }
 
-/// Get the config home directory
+/// Get the data home directory.
 ///
-/// If $XDG_CONFIG_HOME is not set, it returns $HOME/.config
+/// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```
+pub fn get_data_home() -> Path {
+    get_data_home_from_env(os::getenv)
+}
+
+/// Get the config home directory given a closure that returns the the value of an environment variable.
+/// This method allows having a custom environment.
+///
+/// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
+pub fn get_config_home_from_env(env: |&str| -> Option<String>) -> Path {
+    getenv_path(env, "XDG_CONFIG_HOME").unwrap_or(
+        os::homedir().unwrap().join(".config")
+    )
+}
+/// Get the config home directory.
+///
+/// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```
 pub fn get_config_home() -> Path {
-    getenv_path("XDG_CONFIG_HOME").unwrap_or(
-        os::homedir().unwrap().join("/.config")
+    get_config_home_from_env(os::getenv)
+}
+
+/// Get the cache home directory given a closure that returns the the value of an environment variable.
+/// This method allows having a custom environment.
+///
+/// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
+pub fn get_cache_home_from_env(env: |&str| -> Option<String>) -> Path {
+    getenv_path(env, "XDG_CACHE_HOME").unwrap_or(
+        os::homedir().unwrap().join(".cache")
     )
 }
 
 /// Get the cache home directory
 ///
-/// If $XDG_CACHE_HOME is not set, it returns $HOME/.cache
+/// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```
 pub fn get_cache_home() -> Path {
-    getenv_path("XDG_CACHE_HOME").unwrap_or(
-        os::homedir().unwrap().join("/.cache")
-    )
+    get_cache_home_from_env(os::getenv)
 }
 
-/// Get $XDG_RUNTIME_DIR if found and valid
+/*/// Get $XDG_RUNTIME_DIR if found and valid
 ///
-/// This directory must have permissions set to 0700
+/// >If $XDG_RUNTIME_DIR is not set applications should fall back to a replacement directory with similar capabilities and print a warning message. Applications should use this directory for communication and synchronization purposes and should not place larger files in it, since it might reside in runtime memory and cannot necessarily be swapped out to disk.issions set to 0700
 pub fn get_runtime_dir() -> Option<Path> {
     getenv_path("XDG_RUNTIME_DIR")
 }
 
-/// Get an environment variable's value as a Path
-fn getenv_path(env_var: &str) -> Option<Path> {
-    let path = os::getenv(env_var);
+/// Check that the value set for $XDG_RUNTIME_DIR meets the requirements of the specification
+///
+/// >$XDG_RUNTIME_DIR defines the base directory relative to which user-specific non-essential runtime files and other file objects (such as sockets, named pipes, ...) should be stored. The directory MUST be owned by the user, and he MUST be the only one having read and write access to it. Its Unix access mode MUST be 0700.
+/// >
+/// >The lifetime of the directory MUST be bound to the user being logged in. It MUST be created when the user first logs in and if the user fully logs out the directory MUST be removed. If the user logs in more than once he should get pointed to the same directory, and it is mandatory that the directory continues to exist from his first login to his last logout on the system, and not removed in between. Files in the directory MUST not survive reboot or a full logout/login cycle.
+/// >
+/// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
+pub fn test_runtime_dir() -> Result<(), String> {
+    let path = getenv_path("XDG_RUNTIME_DIR");
     match path {
-        Some(path) => Some(Path::new(path)),
+        Some(path) => {
+            match path.stat() {
+                Ok(stat) => {
+                    if stat.perm.intersects(io::GROUP_RWX | io::OTHER_RWX) {
+                        Err("Incorrect permissions".to_string())
+                    } else {
+                        Ok(())
+                    }
+                },
+
+                Err(error) => Err(error.description().to_string())
+            }
+        },
+
+        None => Err("$XDG_RUNTIME_DIR not set".to_string())
+    }
+}*/
+
+/// Get an environment variable's value as a Path
+fn getenv_path(env: |&str| -> Option<String>, env_var: &str) -> Option<Path> {
+    let path = env(env_var);
+    match path {
+        Some(path) => {
+            let path = Path::new(path);
+            if path.is_absolute() {
+                Some(path)
+            } else {
+                None
+            }
+        },
+
         None => None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+    use std::os;
+
+    #[test]
+    fn test_env_with_no_xdg_vars() {
+        let custom_env: HashMap<String, String> = [
+            ("dummy", "")
+        ].iter().map(|&(k, v)| (k.to_string(), v.to_string())).collect();
+
+        let getenv = |var: &str| { custom_env.get(var).map(|x| x.clone()) };
+
+        assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == os::homedir().unwrap().join(".local/share"));
+        assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == os::homedir().unwrap().join(".config"));
+        assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == os::homedir().unwrap().join(".cache"));
+    }
+
+    #[test]
+    fn test_env_with_empty_xdg_vars() {
+        let custom_env: HashMap<String, String> = [
+            ("XDG_DATA_HOME", ""),
+            ("XDG_CONFIG_HOME", ""),
+            ("XDG_CACHE_HOME", "")
+        ].iter().map(|&(k, v)| (k.to_string(), v.to_string())).collect();
+
+        let getenv = |var: &str| { custom_env.get(var).map(|x| x.clone()) };
+
+        assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == os::homedir().unwrap().join(".local/share"));
+        assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == os::homedir().unwrap().join(".config"));
+        assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == os::homedir().unwrap().join(".cache"));
+    }
+
+    #[test]
+    fn test_env_with_xdg_vars() {
+        let cwd = os::make_absolute(&Path::new(".")).unwrap();
+        let custom_env: HashMap<String, String> = [
+            ("XDG_DATA_HOME", format!("{}/user/data", cwd.display())),
+            ("XDG_CONFIG_HOME", format!("{}/user/config", cwd.display())),
+            ("XDG_CACHE_HOME", format!("{}/user/cache", cwd.display())),
+            ].iter().map(|&(ref k, ref v)| (k.to_string(), v.clone())).collect();
+
+        let getenv = |var: &str| { custom_env.get(var).map(|x| x.clone()) };
+
+        assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == custom_env.get("XDG_DATA_HOME").map(Path::new).unwrap());
+        assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == custom_env.get("XDG_CONFIG_HOME").map(Path::new).unwrap());
+        assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+                == custom_env.get("XDG_CACHE_HOME").map(Path::new).unwrap());
     }
 }
