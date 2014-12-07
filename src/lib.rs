@@ -80,7 +80,7 @@ pub fn get_runtime_dir() -> Option<Path> {
 /// >The lifetime of the directory MUST be bound to the user being logged in. It MUST be created when the user first logs in and if the user fully logs out the directory MUST be removed. If the user logs in more than once he should get pointed to the same directory, and it is mandatory that the directory continues to exist from his first login to his last logout on the system, and not removed in between. Files in the directory MUST not survive reboot or a full logout/login cycle.
 /// >
 /// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
-pub fn test_runtime_dir(path: Path) -> Result<(), String> {
+pub fn test_runtime_dir(path: &Path) -> Result<(), String> {
     match path.stat() {
         Ok(stat) => {
             if stat.perm.intersects(io::GROUP_RWX | io::OTHER_RWX) {
@@ -158,7 +158,7 @@ mod tests {
             ("XDG_DATA_HOME", format!("{}/user/data", cwd.display())),
             ("XDG_CONFIG_HOME", format!("{}/user/config", cwd.display())),
             ("XDG_CACHE_HOME", format!("{}/user/cache", cwd.display())),
-            ].iter().map(|&(ref k, ref v)| (k.to_string(), v.clone())).collect();
+        ].iter().map(|&(ref k, ref v)| (k.to_string(), v.clone())).collect();
 
         assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
                 == custom_env.get("XDG_DATA_HOME").map(Path::new).unwrap());
