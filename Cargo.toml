@@ -1,10 +1,11 @@
 [package]
 
 name = "xdg-rs"
-version = "0.0.3"
+version = "0.0.4"
 authors = ["skullzzz <kiran.eighty9@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/skullzzz/xdg-rs"
+documentation = "http://skullzzz.github.io/xdg-rs/xdg/index.html"
 keywords = ["xdg"]
 readme = "README.md"
 description = "Utility to library to better manage the XDG spec"
