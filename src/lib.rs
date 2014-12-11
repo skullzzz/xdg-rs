@@ -1,4 +1,4 @@
-//! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier
+//! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
 //! Some code borrowed from [rust-xdg](https://github.com/o11c/rust-xdg). ```rust-xdg``` is
 //! currently a more complete implementation of the specification. The APIs provided by
@@ -22,7 +22,7 @@ pub fn get_data_home_from_env(getenv: |&str| -> Option<String>) -> Path {
 
 /// Get the data home directory.
 ///
-/// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```
+/// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
 pub fn get_data_home() -> Path {
     get_data_home_from_env(os::getenv)
 }
@@ -68,7 +68,7 @@ pub fn get_config_home_from_env(getenv: |&str| -> Option<String>) -> Path {
 }
 /// Get the config home directory.
 ///
-/// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```
+/// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
 pub fn get_config_home() -> Path {
     get_config_home_from_env(os::getenv)
 }
@@ -113,14 +113,14 @@ pub fn get_cache_home_from_env(getenv: |&str| -> Option<String>) -> Path {
     )
 }
 
-/// Get the cache home directory
+/// Get the cache home directory.
 ///
-/// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```
+/// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
 pub fn get_cache_home() -> Path {
     get_cache_home_from_env(os::getenv)
 }
 
-/// Get $XDG_RUNTIME_DIR if found and valid
+/// Get $XDG_RUNTIME_DIR if found in the environment.
 ///
 /// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application
 /// to fallback to a location that conforms to the specification.
@@ -153,7 +153,7 @@ pub fn test_runtime_dir(path: &Path) -> Result<(), String> {
     }
 }
 
-/// Get an environment variable's value as a Path
+/// Get an environment variable's value as a Path.
 fn getenv_path(getenv: |&str| -> Option<String>, env_var: &str) -> Option<Path> {
     let path = getenv(env_var);
     match path {
