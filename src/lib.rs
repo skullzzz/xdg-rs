@@ -44,8 +44,7 @@ pub fn get_data_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
         None => default_paths
     };
 
-    paths.as_slice()
-        .split(':')
+    (&*paths).split(':')
         .map(Path::new)
         .collect()
 }
@@ -90,8 +89,7 @@ pub fn get_config_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
         None => default_paths
     };
 
-    paths.as_slice()
-        .split(':')
+    (&*paths).split(':')
         .map(Path::new)
         .collect()
 }
@@ -231,16 +229,14 @@ mod tests {
         assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
                 == custom_env.get("XDG_DATA_HOME").map(Path::new).unwrap());
         assert!(super::get_data_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
-                == custom_env["XDG_DATA_DIRS"]
-                    .as_slice()
+                == (&*custom_env["XDG_DATA_DIRS"])
                     .split(':')
                     .map(Path::new)
                     .collect::<Vec<Path>>());
         assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
                 == custom_env.get("XDG_CONFIG_HOME").map(Path::new).unwrap());
         assert!(super::get_config_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
-                == custom_env["XDG_CONFIG_DIRS"]
-                    .as_slice()
+                == (&*custom_env["XDG_CONFIG_DIRS"])
                     .split(':')
                     .map(Path::new)
                     .collect::<Vec<Path>>());
