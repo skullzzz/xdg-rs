@@ -7,7 +7,6 @@
 use std::error::Error;
 use std::io;
 use std::io::fs::PathExtensions;
-use std::iter::IteratorExt;
 use std::os;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
@@ -44,9 +43,7 @@ pub fn get_data_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
         None => default_paths
     };
 
-    (&*paths).split(':')
-        .map(Path::new)
-        .collect()
+    os::split_paths(paths)
 }
 
 /// Get the data directories.
@@ -89,9 +86,7 @@ pub fn get_config_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
         None => default_paths
     };
 
-    (&*paths).split(':')
-        .map(Path::new)
-        .collect()
+    os::split_paths(paths)
 }
 
 /// Get the config directories.
@@ -229,17 +224,11 @@ mod tests {
         assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
                 == custom_env.get("XDG_DATA_HOME").map(Path::new).unwrap());
         assert!(super::get_data_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
-                == (&*custom_env["XDG_DATA_DIRS"])
-                    .split(':')
-                    .map(Path::new)
-                    .collect::<Vec<Path>>());
+                == (os::split_paths(&*custom_env["XDG_DATA_DIRS"])));
         assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
                 == custom_env.get("XDG_CONFIG_HOME").map(Path::new).unwrap());
         assert!(super::get_config_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
-                == (&*custom_env["XDG_CONFIG_DIRS"])
-                    .split(':')
-                    .map(Path::new)
-                    .collect::<Vec<Path>>());
+                == os::split_paths(&*custom_env["XDG_CONFIG_DIRS"]));
         assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
                 == custom_env.get("XDG_CACHE_HOME").map(Path::new).unwrap());
     }
