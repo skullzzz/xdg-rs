@@ -13,26 +13,31 @@ use std::os;
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
-pub fn get_data_home_from_env(getenv: |&str| -> Option<String>) -> Path {
-    getenv_path(getenv, "XDG_DATA_HOME").unwrap_or(
-        os::homedir().unwrap().join(".local/share")
-    )
+pub fn get_data_home_from_env<F>(get_env_var: &F) -> Path where
+    F: Fn(&str) -> Option<String>
+{
+    getenv_path(get_env_var, "XDG_DATA_HOME")
+        .unwrap_or(os::homedir()
+                       .unwrap()
+                       .join(".local/share"))
 }
 
 /// Get the data home directory.
 ///
 /// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
 pub fn get_data_home() -> Path {
-    get_data_home_from_env(os::getenv)
+    get_data_home_from_env(&os::getenv)
 }
 
 /// Get the default data directories given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_DATA_DIRS``` is not set, it returns ```[/usr/local/share, /usr/share]```.
-pub fn get_data_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
+pub fn get_data_dirs_from_env<F>(get_env_var: &F) -> Vec<Path> where
+    F: Fn(&str) -> Option<String>
+{
     let default_paths = "/usr/local/share:/usr/share".to_string();
-    let paths = match getenv("XDG_DATA_DIRS") {
+    let paths = match (*get_env_var)("XDG_DATA_DIRS") {
         Some(paths) => {
             if paths.len() > 0 {
                 paths
@@ -50,32 +55,37 @@ pub fn get_data_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
 ///
 /// If ```$XDG_DATA_DIRS``` is not set, it returns ```[/usr/local/share, /usr/share]```.
 pub fn get_data_dirs() -> Vec<Path> {
-    get_data_dirs_from_env(os::getenv)
+    get_data_dirs_from_env(&os::getenv)
 }
 
 /// Get the config home directory given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
-pub fn get_config_home_from_env(getenv: |&str| -> Option<String>) -> Path {
-    getenv_path(getenv, "XDG_CONFIG_HOME").unwrap_or(
-        os::homedir().unwrap().join(".config")
-    )
+pub fn get_config_home_from_env<F>(get_env_var: &F) -> Path where
+    F: Fn(&str) -> Option<String>
+{
+    getenv_path(get_env_var, "XDG_CONFIG_HOME")
+        .unwrap_or(os::homedir()
+                       .unwrap()
+                       .join(".config"))
 }
 /// Get the config home directory.
 ///
 /// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
 pub fn get_config_home() -> Path {
-    get_config_home_from_env(os::getenv)
+    get_config_home_from_env(&os::getenv)
 }
 
 /// Get the default config directories given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CONFIG_DIRS``` is not set, it returns ```[/etc/xdg]```.
-pub fn get_config_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
+pub fn get_config_dirs_from_env<F>(get_env_var: &F) -> Vec<Path> where
+    F: Fn(&str) -> Option<String>
+{
     let default_paths = "/etc/xdg".to_string();
-    let paths = match getenv("XDG_CONFIG_DIRS") {
+    let paths = match (*get_env_var)("XDG_CONFIG_DIRS") {
         Some(paths) => {
             if paths.len() > 0 {
                 paths
@@ -93,36 +103,41 @@ pub fn get_config_dirs_from_env(getenv: |&str| -> Option<String>) -> Vec<Path> {
 ///
 /// If ```$XDG_CONFIG_DIRS``` is not set, it returns ```[/etc/xdg]```.
 pub fn get_config_dirs() -> Vec<Path> {
-    get_config_dirs_from_env(os::getenv)
+    get_config_dirs_from_env(&os::getenv)
 }
 
 /// Get the cache home directory given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
-pub fn get_cache_home_from_env(getenv: |&str| -> Option<String>) -> Path {
-    getenv_path(getenv, "XDG_CACHE_HOME").unwrap_or(
-        os::homedir().unwrap().join(".cache")
-    )
+pub fn get_cache_home_from_env<F>(get_env_var: &F) -> Path where
+    F: Fn(&str) -> Option<String>
+{
+    getenv_path(get_env_var, "XDG_CACHE_HOME")
+        .unwrap_or(os::homedir()
+                       .unwrap()
+                       .join(".cache"))
 }
 
 /// Get the cache home directory.
 ///
 /// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
 pub fn get_cache_home() -> Path {
-    get_cache_home_from_env(os::getenv)
+    get_cache_home_from_env(&os::getenv)
 }
 
 /// Get $XDG_RUNTIME_DIR if found in the environment.
 ///
 /// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application
 /// to fallback to a location that conforms to the specification.
-pub fn get_runtime_dir_from_env(getenv: |&str| -> Option<String>) -> Option<Path> {
-    getenv_path(getenv, "XDG_RUNTIME_DIR")
+pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<Path> where
+    F: Fn(&str) -> Option<String>
+{
+    getenv_path(get_env_var, "XDG_RUNTIME_DIR")
 }
 
 pub fn get_runtime_dir() -> Option<Path> {
-    getenv_path(os::getenv, "XDG_RUNTIME_DIR")
+    getenv_path(&os::getenv, "XDG_RUNTIME_DIR")
 }
 
 /// Check that the value set for ```$XDG_RUNTIME_DIR``` meets the requirements of the specification
@@ -147,8 +162,10 @@ pub fn test_runtime_dir(path: &Path) -> Result<(), String> {
 }
 
 /// Get an environment variable's value as a Path.
-fn getenv_path(getenv: |&str| -> Option<String>, env_var: &str) -> Option<Path> {
-    let path = getenv(env_var);
+fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<Path> where
+    F: Fn(&str) -> Option<String>
+{
+    let path = (*get_env_var)(env_var);
     match path {
         Some(path) => {
             let path = Path::new(path);
@@ -166,7 +183,6 @@ fn getenv_path(getenv: |&str| -> Option<String>, env_var: &str) -> Option<Path> 
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
-    use std::iter::IteratorExt;
     use std::os;
 
     #[test]
@@ -174,17 +190,18 @@ mod tests {
         let mut custom_env = HashMap::new();
         custom_env.insert("dummy", "".to_string());
 
-        assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        let f = |&: var: &str| { custom_env.get(var).map(|x| x.clone()) };
+        assert!(super::get_data_home_from_env(&f)
                 == os::homedir().unwrap().join(".local/share"));
-        assert!(super::get_data_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_data_dirs_from_env(&f)
                 == vec![Path::new("/usr/local/share"), Path::new("/usr/share")]);
-        assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_config_home_from_env(&f)
                 == os::homedir().unwrap().join(".config"));
-        assert!(super::get_config_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_config_dirs_from_env(&f)
                 == vec![Path::new("/etc/xdg")]);
-        assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_cache_home_from_env(&f)
                 == os::homedir().unwrap().join(".cache"));
-        assert!(super::get_runtime_dir_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_runtime_dir_from_env(&f)
                 == None);
     }
 
@@ -197,17 +214,18 @@ mod tests {
         custom_env.insert("XDG_CONFIG_DIRS", "".to_string());
         custom_env.insert("XDG_CACHE_HOME", "".to_string());
 
-        assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        let f = |&: var: &str| { custom_env.get(var).map(|x| x.clone()) };
+        assert!(super::get_data_home_from_env(&f)
                 == os::homedir().unwrap().join(".local/share"));
-        assert!(super::get_data_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_data_dirs_from_env(&f)
                 == vec![Path::new("/usr/local/share"), Path::new("/usr/share")]);
-        assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_config_home_from_env(&f)
                 == os::homedir().unwrap().join(".config"));
-        assert!(super::get_config_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_config_dirs_from_env(&f)
                 == vec![Path::new("/etc/xdg")]);
-        assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_cache_home_from_env(&f)
                 == os::homedir().unwrap().join(".cache"));
-        assert!(super::get_runtime_dir_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_runtime_dir_from_env(&f)
                 == None);
     }
 
@@ -221,15 +239,16 @@ mod tests {
         custom_env.insert("XDG_CONFIG_DIRS", format!("{}/config:{}/local/config", cwd.display(), cwd.display()));
         custom_env.insert("XDG_CACHE_HOME", format!("{}/user/cache", cwd.display()));
 
-        assert!(super::get_data_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        let f = |&: var: &str| { custom_env.get(var).map(|x| x.clone()) };
+        assert!(super::get_data_home_from_env(&f)
                 == custom_env.get("XDG_DATA_HOME").map(Path::new).unwrap());
-        assert!(super::get_data_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_data_dirs_from_env(&f)
                 == (os::split_paths(&*custom_env["XDG_DATA_DIRS"])));
-        assert!(super::get_config_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_config_home_from_env(&f)
                 == custom_env.get("XDG_CONFIG_HOME").map(Path::new).unwrap());
-        assert!(super::get_config_dirs_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_config_dirs_from_env(&f)
                 == os::split_paths(&*custom_env["XDG_CONFIG_DIRS"]));
-        assert!(super::get_cache_home_from_env(|var: &str| { custom_env.get(var).map(|x| x.clone()) })
+        assert!(super::get_cache_home_from_env(&f)
                 == custom_env.get("XDG_CACHE_HOME").map(Path::new).unwrap());
     }
 }
