@@ -1,4 +1,4 @@
-#![feature(os, core, old_io, old_path)]
+#![feature(os, core, old_io, old_path, env)]
 
 //! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
@@ -10,6 +10,7 @@ use std::error::Error;
 use std::old_io as io;
 use std::old_io::fs::PathExtensions;
 use std::os;
+use std::env;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
@@ -19,7 +20,7 @@ pub fn get_data_home_from_env<F>(get_env_var: &F) -> Path where
     F: Fn(&str) -> Option<String>
 {
     getenv_path(get_env_var, "XDG_DATA_HOME")
-        .unwrap_or(os::homedir()
+        .unwrap_or(env::home_dir()
                        .unwrap()
                        .join(".local/share"))
 }
@@ -50,7 +51,7 @@ pub fn get_data_dirs_from_env<F>(get_env_var: &F) -> Vec<Path> where
         None => default_paths
     };
 
-    os::split_paths(paths)
+    env::split_paths(&paths).collect()
 }
 
 /// Get the data directories.
@@ -68,7 +69,7 @@ pub fn get_config_home_from_env<F>(get_env_var: &F) -> Path where
     F: Fn(&str) -> Option<String>
 {
     getenv_path(get_env_var, "XDG_CONFIG_HOME")
-        .unwrap_or(os::homedir()
+        .unwrap_or(env::home_dir()
                        .unwrap()
                        .join(".config"))
 }
@@ -98,7 +99,7 @@ pub fn get_config_dirs_from_env<F>(get_env_var: &F) -> Vec<Path> where
         None => default_paths
     };
 
-    os::split_paths(paths)
+    env::split_paths(&paths).collect()
 }
 
 /// Get the config directories.
@@ -116,7 +117,7 @@ pub fn get_cache_home_from_env<F>(get_env_var: &F) -> Path where
     F: Fn(&str) -> Option<String>
 {
     getenv_path(get_env_var, "XDG_CACHE_HOME")
-        .unwrap_or(os::homedir()
+        .unwrap_or(env::home_dir()
                        .unwrap()
                        .join(".cache"))
 }
@@ -185,6 +186,7 @@ fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<Path> where
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
+    use std::env;
     use std::os;
 
     #[test]
@@ -194,15 +196,15 @@ mod tests {
 
         let f = |&: var: &str| { custom_env.get(var).map(|x| x.clone()) };
         assert!(super::get_data_home_from_env(&f)
-                == os::homedir().unwrap().join(".local/share"));
+                == env::home_dir().unwrap().join(".local/share"));
         assert!(super::get_data_dirs_from_env(&f)
                 == vec![Path::new("/usr/local/share"), Path::new("/usr/share")]);
         assert!(super::get_config_home_from_env(&f)
-                == os::homedir().unwrap().join(".config"));
+                == env::home_dir().unwrap().join(".config"));
         assert!(super::get_config_dirs_from_env(&f)
                 == vec![Path::new("/etc/xdg")]);
         assert!(super::get_cache_home_from_env(&f)
-                == os::homedir().unwrap().join(".cache"));
+                == env::home_dir().unwrap().join(".cache"));
         assert!(super::get_runtime_dir_from_env(&f)
                 == None);
     }
@@ -218,15 +220,15 @@ mod tests {
 
         let f = |&: var: &str| { custom_env.get(var).map(|x| x.clone()) };
         assert!(super::get_data_home_from_env(&f)
-                == os::homedir().unwrap().join(".local/share"));
+                == env::home_dir().unwrap().join(".local/share"));
         assert!(super::get_data_dirs_from_env(&f)
                 == vec![Path::new("/usr/local/share"), Path::new("/usr/share")]);
         assert!(super::get_config_home_from_env(&f)
-                == os::homedir().unwrap().join(".config"));
+                == env::home_dir().unwrap().join(".config"));
         assert!(super::get_config_dirs_from_env(&f)
                 == vec![Path::new("/etc/xdg")]);
         assert!(super::get_cache_home_from_env(&f)
-                == os::homedir().unwrap().join(".cache"));
+                == env::home_dir().unwrap().join(".cache"));
         assert!(super::get_runtime_dir_from_env(&f)
                 == None);
     }
@@ -245,11 +247,11 @@ mod tests {
         assert!(super::get_data_home_from_env(&f)
                 == custom_env.get("XDG_DATA_HOME").map(Path::new).unwrap());
         assert!(super::get_data_dirs_from_env(&f)
-                == (os::split_paths(&*custom_env["XDG_DATA_DIRS"])));
+                == (env::split_paths(&*custom_env["XDG_DATA_DIRS"]).collect::<Vec<Path>>()));
         assert!(super::get_config_home_from_env(&f)
                 == custom_env.get("XDG_CONFIG_HOME").map(Path::new).unwrap());
         assert!(super::get_config_dirs_from_env(&f)
-                == os::split_paths(&*custom_env["XDG_CONFIG_DIRS"]));
+                == env::split_paths(&*custom_env["XDG_CONFIG_DIRS"]).collect::<Vec<Path>>());
         assert!(super::get_cache_home_from_env(&f)
                 == custom_env.get("XDG_CACHE_HOME").map(Path::new).unwrap());
     }
