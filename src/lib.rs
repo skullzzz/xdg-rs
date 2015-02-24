@@ -1,3 +1,5 @@
+#![feature(os, core, old_io, old_path)]
+
 //! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
 //! Some code borrowed from [rust-xdg](https://github.com/o11c/rust-xdg). ```rust-xdg``` is
@@ -5,8 +7,8 @@
 //! ```rust-xdg``` and ```xdg-rs``` are different.
 
 use std::error::Error;
-use std::io;
-use std::io::fs::PathExtensions;
+use std::old_io as io;
+use std::old_io::fs::PathExtensions;
 use std::os;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
