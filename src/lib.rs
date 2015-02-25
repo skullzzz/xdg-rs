@@ -266,11 +266,11 @@ mod tests {
         assert!(super::get_data_home_from_env(&f)
                 == custom_env.get("XDG_DATA_HOME").map(PathBuf::new).unwrap());
         assert!(super::get_data_dirs_from_env(&f)
-                == (super::split_paths(&*custom_env["XDG_DATA_DIRS"])));
+                == (super::split_paths(&custom_env["XDG_DATA_DIRS"])));
         assert!(super::get_config_home_from_env(&f)
                 == custom_env.get("XDG_CONFIG_HOME").map(PathBuf::new).unwrap());
         assert!(super::get_config_dirs_from_env(&f)
-                == super::split_paths(&*custom_env["XDG_CONFIG_DIRS"]));
+                == super::split_paths(&custom_env["XDG_CONFIG_DIRS"]));
         assert!(super::get_cache_home_from_env(&f)
                 == custom_env.get("XDG_CACHE_HOME").map(PathBuf::new).unwrap());
     }
