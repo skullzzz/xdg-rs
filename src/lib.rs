@@ -211,7 +211,7 @@ mod tests {
         let mut custom_env = HashMap::new();
         custom_env.insert("dummy", "");
 
-        let f = |&: var: &str| { custom_env.get(var).map(|x| x.as_os_str().to_os_string()) };
+        let f = |var: &str| { custom_env.get(var).map(|x| x.as_os_str().to_os_string()) };
         assert!(super::get_data_home_from_env(&f)
                 == super::home_dir().join(".local/share"));
         assert!(super::get_data_dirs_from_env(&f)
@@ -235,7 +235,7 @@ mod tests {
         custom_env.insert("XDG_CONFIG_DIRS", "");
         custom_env.insert("XDG_CACHE_HOME", "");
 
-        let f = |&: var: &str| { custom_env.get(var).map(|x| x.as_os_str().to_os_string()) };
+        let f = |var: &str| { custom_env.get(var).map(|x| x.as_os_str().to_os_string()) };
         assert!(super::get_data_home_from_env(&f)
                 == super::home_dir().join(".local/share"));
         assert!(super::get_data_dirs_from_env(&f)
@@ -262,7 +262,7 @@ mod tests {
                 vec![cwd.join("config"), cwd.join("local/config")].into_iter()).unwrap());
         custom_env.insert("XDG_CACHE_HOME", cwd.join("user/cache").as_os_str().to_os_string());
 
-        let f = |&: var: &str| { custom_env.get(var).map(|x| x.clone()) };
+        let f = |var: &str| { custom_env.get(var).map(|x| x.clone()) };
         assert!(super::get_data_home_from_env(&f)
                 == custom_env.get("XDG_DATA_HOME").map(PathBuf::new).unwrap());
         assert!(super::get_data_dirs_from_env(&f)
