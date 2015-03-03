@@ -1,5 +1,5 @@
 #![cfg_attr(unix, feature(old_io, core, old_path))]
-#![feature(os, env, std_misc, path)]
+#![feature(os, std_misc, path)]
 
 //! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
