@@ -1,4 +1,4 @@
-#![cfg_attr(unix, feature(old_io, old_path))]
+#![cfg_attr(unix, feature(fs_ext, path_ext))]
 #![feature(std_misc)]
 
 //! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
@@ -156,15 +156,12 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
 #[cfg(unix)]
 pub fn test_runtime_dir(path: &PathBuf) -> Result<(), String> {
-    use std::old_path;
-    use std::old_io;
-    use std::os::unix::prelude::OsStrExt;
-    use std::old_io::fs::PathExtensions;
+    use std::os::unix::fs::PermissionsExt;
     use std::error::Error;
-    // FIXME: https://github.com/rust-lang/rfcs/issues/905
-    match old_path::Path::new(path.as_os_str().as_bytes()).stat() {
+    use std::fs::PathExt;
+    match path.metadata() {
         Ok(stat) => {
-            if stat.perm.intersects(old_io::GROUP_RWX | old_io::OTHER_RWX) {
+            if stat.permissions().mode() != 0o700 {
                 Err("Incorrect permissions".to_string())
             } else {
                 Ok(())
