@@ -1,7 +1,7 @@
 xdg-rs
 ====
 
-[![Build Status](https://travis-ci.org/skullzzz/xdg-rs.svg)](https://travis-ci.org/skullzzz/xdg-rs)
+[![Build Status](https://travis-ci.org/skullzzz/xdg-rs.svg)](https://travis-ci.org/skullzzz/xdg-rs) [![](http://meritbadge.herokuapp.com/xdg-rs)](https://crates.io/crates/xdg-rs)
 
 [Documentation](http://skullzzz.github.io/xdg-rs/xdg/index.html)
 
