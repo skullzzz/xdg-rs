@@ -1,4 +1,4 @@
-#![cfg_attr(unix, feature(fs_ext, path_ext))]
+#![cfg_attr(unix, feature(fs_ext))]
 
 //! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
@@ -9,9 +9,11 @@
 use std::env::{self, home_dir, split_paths};
 use std::error::Error;
 use std::ffi::OsString;
-use std::fs::PathExt;
+use std::fs;
+use std::path::{Path, PathBuf};
+
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
-use std::path::PathBuf;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
@@ -138,12 +140,12 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// >
 /// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
 #[cfg(unix)]
-pub fn test_runtime_dir(path: &PathBuf) -> Result<bool, std::io::Error> {
-    path.metadata().map(|stat| (stat.permissions().mode() == 0o700))
+pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<bool, std::io::Error> {
+    fs::metadata(path).map(|attr| (attr.permissions().mode() == 0o700))
 }
 
 #[cfg(not(unix))]
-pub fn test_runtime_dir(path: &PathBuf) -> Result<bool, std::io::Error> {
+pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<bool, std::io::Error> {
     Ok(true)
 }
 
