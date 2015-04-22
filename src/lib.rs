@@ -6,9 +6,12 @@
 //! currently a more complete implementation of the specification. The APIs provided by
 //! ```rust-xdg``` and ```xdg-rs``` are different.
 
-use std::path::PathBuf;
 use std::env::{self, home_dir, split_paths};
-use std::ffi::{self, OsString};
+use std::error::Error;
+use std::ffi::OsString;
+use std::fs::PathExt;
+use std::os::unix::fs::PermissionsExt;
+use std::path::PathBuf;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
@@ -35,10 +38,10 @@ pub fn get_data_home() -> PathBuf {
 pub fn get_data_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    let default_paths: OsString = From::from("/usr/local/share:/usr/share");
+    let default_paths = OsString::from("/usr/local/share:/usr/share");
     let paths = match (*get_env_var)("XDG_DATA_DIRS") {
         Some(paths) => {
-            if paths != ffi::OsString::from("") {
+            if paths != OsString::from("") {
                 paths
             } else {
                 default_paths
@@ -82,7 +85,7 @@ pub fn get_config_home() -> PathBuf {
 pub fn get_config_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    let default_paths: OsString = From::from("/etc/xdg");
+    let default_paths = OsString::from("/etc/xdg");
     let paths = match (*get_env_var)("XDG_CONFIG_DIRS") {
         Some(paths) => {
             if paths != OsString::from("") {
@@ -146,9 +149,6 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
 #[cfg(unix)]
 pub fn test_runtime_dir(path: &PathBuf) -> Result<(), String> {
-    use std::os::unix::fs::PermissionsExt;
-    use std::error::Error;
-    use std::fs::PathExt;
     match path.metadata() {
         Ok(stat) => {
             if stat.permissions().mode() != 0o700 {
@@ -191,6 +191,7 @@ fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
 mod tests {
     use std::collections::HashMap;
     use std::env::{self, home_dir, join_paths, split_paths};
+    use std::ffi::OsString;
     use std::path::PathBuf;
 
     #[test]
@@ -198,7 +199,7 @@ mod tests {
         let mut custom_env = HashMap::new();
         custom_env.insert("dummy", "");
 
-        let f = |var: &str| { custom_env.get(var).map(From::from) };
+        let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
         assert!(super::get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
         assert!(super::get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
@@ -217,7 +218,7 @@ mod tests {
         custom_env.insert("XDG_CONFIG_DIRS", "");
         custom_env.insert("XDG_CACHE_HOME", "");
 
-        let f = |var: &str| { custom_env.get(var).map(From::from) };
+        let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
         assert!(super::get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
         assert!(super::get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
@@ -238,7 +239,7 @@ mod tests {
         custom_env.insert("XDG_CONFIG_DIRS", join_paths(vec![cwd.join("config"), cwd.join("local/config")]).unwrap());
         custom_env.insert("XDG_CACHE_HOME", cwd.join("user/cache").into_os_string());
 
-        let f = |var: &str| { custom_env.get(var).map(From::from) };
+        let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
         assert!(super::get_data_home_from_env(&f)   == custom_env.get("XDG_DATA_HOME").map(PathBuf::from).unwrap());
         assert!(super::get_data_dirs_from_env(&f)   == split_paths(&custom_env["XDG_DATA_DIRS"]).collect::<Vec<PathBuf>>());
