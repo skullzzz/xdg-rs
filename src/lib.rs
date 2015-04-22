@@ -39,16 +39,10 @@ pub fn get_data_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
     let default_paths = OsString::from("/usr/local/share:/usr/share");
-    let paths = match (*get_env_var)("XDG_DATA_DIRS") {
-        Some(paths) => {
-            if paths != OsString::from("") {
-                paths
-            } else {
-                default_paths
-            }
-        },
 
-        None => default_paths
+    let paths = match (*get_env_var)("XDG_DATA_DIRS").iter().next() {
+        Some(p) if p != "" => p.clone(),
+        _ => default_paths
     };
 
     split_paths(&paths).collect()
@@ -86,16 +80,10 @@ pub fn get_config_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
     let default_paths = OsString::from("/etc/xdg");
-    let paths = match (*get_env_var)("XDG_CONFIG_DIRS") {
-        Some(paths) => {
-            if paths != OsString::from("") {
-                paths
-            } else {
-                default_paths
-            }
-        },
 
-        None => default_paths
+    let paths = match (*get_env_var)("XDG_CONFIG_DIRS").iter().next() {
+        Some(p) if p != "" => p.clone(),
+        _ => default_paths
     };
 
     split_paths(&paths).collect()
@@ -164,17 +152,10 @@ fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
     let path = (*get_env_var)(env_var);
-    match path {
-        Some(path) => {
-            let path = PathBuf::from(&path);
-            if path.is_absolute() {
-                Some(path)
-            } else {
-                None
-            }
-        },
-
-        None => None
+    let path = path.map(PathBuf::from);
+    match path.iter().next() {
+        Some(p) if p.is_absolute() => Some(p.clone()),
+        _ => None
     }
 }
 
