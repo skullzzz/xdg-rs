@@ -128,7 +128,7 @@ pub fn get_cache_home() -> PathBuf {
 
 /// Get $XDG_RUNTIME_DIR if found in the environment.
 ///
-/// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application
+/// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application.
 /// to fallback to a location that conforms to the specification.
 pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
@@ -140,7 +140,9 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
     getenv_path(&env::var_os, "XDG_RUNTIME_DIR")
 }
 
-/// Check that the value set for ```$XDG_RUNTIME_DIR``` meets the requirements of the specification
+/// Check that the value set for ```$XDG_RUNTIME_DIR``` meets the requirements of the specification.
+///
+/// Returns Ok(true) if permissions are correct, Ok(false) if permissions are incorrect, or propogates any errors that occurred while checking permissions.
 ///
 /// >$XDG_RUNTIME_DIR defines the base directory relative to which user-specific non-essential runtime files and other file objects (such as sockets, named pipes, ...) should be stored. The directory MUST be owned by the user, and he MUST be the only one having read and write access to it. Its Unix access mode MUST be 0700.
 /// >
@@ -148,25 +150,14 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// >
 /// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
 #[cfg(unix)]
-pub fn test_runtime_dir(path: &PathBuf) -> Result<(), String> {
-    match path.metadata() {
-        Ok(stat) => {
-            if stat.permissions().mode() != 0o700 {
-                Err("Incorrect permissions".to_string())
-            } else {
-                Ok(())
-            }
-        },
-
-        Err(error) => Err(error.description().to_string())
-    }
+pub fn test_runtime_dir(path: &PathBuf) -> Result<bool, std::io::Error> {
+    path.metadata().map(|stat| (stat.permissions().mode() == 0o700))
 }
 
 #[cfg(not(unix))]
-pub fn test_runtime_dir(_path: &PathBuf) -> Result<(), String> {
-    Ok(())
+pub fn test_runtime_dir(path: &PathBuf) -> Result<bool, std::io::Error> {
+    Ok(true)
 }
-
 
 /// Get an environment variable's value as a PathBuf.
 fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
@@ -189,6 +180,8 @@ fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::collections::HashMap;
     use std::env::{self, home_dir, join_paths, split_paths};
     use std::ffi::OsString;
@@ -201,12 +194,12 @@ mod tests {
 
         let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
-        assert!(super::get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
-        assert!(super::get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
-        assert!(super::get_config_home_from_env(&f) == home_dir().unwrap().join(".config"));
-        assert!(super::get_config_dirs_from_env(&f) == vec![PathBuf::from("/etc/xdg")]);
-        assert!(super::get_cache_home_from_env(&f)  == home_dir().unwrap().join(".cache"));
-        assert!(super::get_runtime_dir_from_env(&f) == None);
+        assert!(get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
+        assert!(get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
+        assert!(get_config_home_from_env(&f) == home_dir().unwrap().join(".config"));
+        assert!(get_config_dirs_from_env(&f) == vec![PathBuf::from("/etc/xdg")]);
+        assert!(get_cache_home_from_env(&f)  == home_dir().unwrap().join(".cache"));
+        assert!(get_runtime_dir_from_env(&f) == None);
     }
 
     #[test]
@@ -220,12 +213,12 @@ mod tests {
 
         let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
-        assert!(super::get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
-        assert!(super::get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
-        assert!(super::get_config_home_from_env(&f) == home_dir().unwrap().join(".config"));
-        assert!(super::get_config_dirs_from_env(&f) == vec![PathBuf::from("/etc/xdg")]);
-        assert!(super::get_cache_home_from_env(&f)  == home_dir().unwrap().join(".cache"));
-        assert!(super::get_runtime_dir_from_env(&f) == None);
+        assert!(get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
+        assert!(get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
+        assert!(get_config_home_from_env(&f) == home_dir().unwrap().join(".config"));
+        assert!(get_config_dirs_from_env(&f) == vec![PathBuf::from("/etc/xdg")]);
+        assert!(get_cache_home_from_env(&f)  == home_dir().unwrap().join(".cache"));
+        assert!(get_runtime_dir_from_env(&f) == None);
     }
 
     #[test]
@@ -241,10 +234,10 @@ mod tests {
 
         let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
-        assert!(super::get_data_home_from_env(&f)   == custom_env.get("XDG_DATA_HOME").map(PathBuf::from).unwrap());
-        assert!(super::get_data_dirs_from_env(&f)   == split_paths(&custom_env["XDG_DATA_DIRS"]).collect::<Vec<PathBuf>>());
-        assert!(super::get_config_home_from_env(&f) == custom_env.get("XDG_CONFIG_HOME").map(PathBuf::from).unwrap());
-        assert!(super::get_config_dirs_from_env(&f) == split_paths(&custom_env["XDG_CONFIG_DIRS"]).collect::<Vec<PathBuf>>());
-        assert!(super::get_cache_home_from_env(&f)  == custom_env.get("XDG_CACHE_HOME").map(PathBuf::from).unwrap());
+        assert!(get_data_home_from_env(&f)   == custom_env.get("XDG_DATA_HOME").map(PathBuf::from).unwrap());
+        assert!(get_data_dirs_from_env(&f)   == split_paths(&custom_env["XDG_DATA_DIRS"]).collect::<Vec<PathBuf>>());
+        assert!(get_config_home_from_env(&f) == custom_env.get("XDG_CONFIG_HOME").map(PathBuf::from).unwrap());
+        assert!(get_config_dirs_from_env(&f) == split_paths(&custom_env["XDG_CONFIG_DIRS"]).collect::<Vec<PathBuf>>());
+        assert!(get_cache_home_from_env(&f)  == custom_env.get("XDG_CACHE_HOME").map(PathBuf::from).unwrap());
     }
 }
