@@ -194,12 +194,12 @@ mod tests {
 
         let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
-        assert!(get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
-        assert!(get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
-        assert!(get_config_home_from_env(&f) == home_dir().unwrap().join(".config"));
-        assert!(get_config_dirs_from_env(&f) == vec![PathBuf::from("/etc/xdg")]);
-        assert!(get_cache_home_from_env(&f)  == home_dir().unwrap().join(".cache"));
-        assert!(get_runtime_dir_from_env(&f) == None);
+        assert!(get_data_home_from_env(&f).unwrap()   == home_dir().unwrap().join(".local/share"));
+        assert!(get_data_dirs_from_env(&f)            == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
+        assert!(get_config_home_from_env(&f).unwrap() == home_dir().unwrap().join(".config"));
+        assert!(get_config_dirs_from_env(&f)          == vec![PathBuf::from("/etc/xdg")]);
+        assert!(get_cache_home_from_env(&f).unwrap()  == home_dir().unwrap().join(".cache"));
+        assert!(get_runtime_dir_from_env(&f)          == None);
     }
 
     #[test]
@@ -213,12 +213,12 @@ mod tests {
 
         let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
-        assert!(get_data_home_from_env(&f)   == home_dir().unwrap().join(".local/share"));
-        assert!(get_data_dirs_from_env(&f)   == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
-        assert!(get_config_home_from_env(&f) == home_dir().unwrap().join(".config"));
-        assert!(get_config_dirs_from_env(&f) == vec![PathBuf::from("/etc/xdg")]);
-        assert!(get_cache_home_from_env(&f)  == home_dir().unwrap().join(".cache"));
-        assert!(get_runtime_dir_from_env(&f) == None);
+        assert!(get_data_home_from_env(&f).unwrap()   == home_dir().unwrap().join(".local/share"));
+        assert!(get_data_dirs_from_env(&f)            == vec![PathBuf::from("/usr/local/share"), PathBuf::from("/usr/share")]);
+        assert!(get_config_home_from_env(&f).unwrap() == home_dir().unwrap().join(".config"));
+        assert!(get_config_dirs_from_env(&f)          == vec![PathBuf::from("/etc/xdg")]);
+        assert!(get_cache_home_from_env(&f).unwrap()  == home_dir().unwrap().join(".cache"));
+        assert!(get_runtime_dir_from_env(&f)          == None);
     }
 
     #[test]
@@ -234,10 +234,10 @@ mod tests {
 
         let f = |var: &str| { custom_env.get(var).map(OsString::from) };
 
-        assert!(get_data_home_from_env(&f)   == custom_env.get("XDG_DATA_HOME").map(PathBuf::from).unwrap());
-        assert!(get_data_dirs_from_env(&f)   == split_paths(&custom_env["XDG_DATA_DIRS"]).collect::<Vec<PathBuf>>());
-        assert!(get_config_home_from_env(&f) == custom_env.get("XDG_CONFIG_HOME").map(PathBuf::from).unwrap());
-        assert!(get_config_dirs_from_env(&f) == split_paths(&custom_env["XDG_CONFIG_DIRS"]).collect::<Vec<PathBuf>>());
-        assert!(get_cache_home_from_env(&f)  == custom_env.get("XDG_CACHE_HOME").map(PathBuf::from).unwrap());
+        assert!(get_data_home_from_env(&f).unwrap()   == custom_env.get("XDG_DATA_HOME").map(PathBuf::from).unwrap());
+        assert!(get_data_dirs_from_env(&f)            == split_paths(&custom_env["XDG_DATA_DIRS"]).collect::<Vec<PathBuf>>());
+        assert!(get_config_home_from_env(&f).unwrap() == custom_env.get("XDG_CONFIG_HOME").map(PathBuf::from).unwrap());
+        assert!(get_config_dirs_from_env(&f)          == split_paths(&custom_env["XDG_CONFIG_DIRS"]).collect::<Vec<PathBuf>>());
+        assert!(get_cache_home_from_env(&f).unwrap()  == custom_env.get("XDG_CACHE_HOME").map(PathBuf::from).unwrap());
     }
 }
