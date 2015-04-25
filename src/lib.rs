@@ -157,25 +157,23 @@ fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> 
 fn get_env_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    let path = (*get_env_var)(env_var);
-    let path = path.map(PathBuf::from);
-    match path.iter().next() {
-        Some(p) if p.is_absolute() => Some(p.clone()),
-        _ => None
-    }
+    (*get_env_var)(env_var)
+        .map(PathBuf::from)
+        .into_iter()
+        .filter(|x| x.is_absolute())
+        .next()
 }
 
 fn get_env_paths_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    let default_paths = OsString::from(default);
+    let path_string = (*get_env_var)(env_var)
+        .into_iter()
+        .filter(|x| x != "")
+        .next()
+        .unwrap_or(OsString::from(default));
 
-    let paths = match (*get_env_var)(env_var).iter().next() {
-        Some(p) if p != "" => p.clone(),
-        _ => default_paths
-    };
-
-    split_paths(&paths).collect()
+    split_paths(&path_string).collect()
 }
 
 #[cfg(test)]
