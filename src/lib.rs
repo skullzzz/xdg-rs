@@ -6,11 +6,17 @@
 //! currently a more complete implementation of the specification. The APIs provided by
 //! ```rust-xdg``` and ```xdg-rs``` are different.
 
+pub mod error;
+
+pub use error::*;
+
+use std::convert::From;
 use std::env::{self, home_dir, split_paths};
-use std::error::Error;
 use std::ffi::OsString;
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
+use std::result;
 
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -19,17 +25,16 @@ use std::os::unix::fs::PermissionsExt;
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
-pub fn get_data_home_from_env<F>(get_env_var: &F) -> PathBuf
+pub fn get_data_home_from_env<F>(get_env_var: &F) -> Result<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    getenv_path(get_env_var, "XDG_DATA_HOME")
-        .unwrap_or(home_dir().unwrap().join(".local/share"))
+    get_env_path_or_default(get_env_var, "XDG_DATA_HOME", ".local/share")
 }
 
 /// Get the data home directory.
 ///
 /// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
-pub fn get_data_home() -> PathBuf {
+pub fn get_data_home() -> Result<PathBuf> {
     get_data_home_from_env(&env::var_os)
 }
 
@@ -40,14 +45,7 @@ pub fn get_data_home() -> PathBuf {
 pub fn get_data_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    let default_paths = OsString::from("/usr/local/share:/usr/share");
-
-    let paths = match (*get_env_var)("XDG_DATA_DIRS").iter().next() {
-        Some(p) if p != "" => p.clone(),
-        _ => default_paths
-    };
-
-    split_paths(&paths).collect()
+    get_env_paths_or_default(get_env_var, "XDG_DATA_DIRS", "/usr/local/share:/usr/share")
 }
 
 /// Get the data directories.
@@ -61,16 +59,15 @@ pub fn get_data_dirs() -> Vec<PathBuf> {
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
-pub fn get_config_home_from_env<F>(get_env_var: &F) -> PathBuf
+pub fn get_config_home_from_env<F>(get_env_var: &F) -> Result<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    getenv_path(get_env_var, "XDG_CONFIG_HOME")
-        .unwrap_or(home_dir().unwrap().join(".config"))
+    get_env_path_or_default(get_env_var, "XDG_CONFIG_HOME", ".config")
 }
 /// Get the config home directory.
 ///
 /// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
-pub fn get_config_home() -> PathBuf {
+pub fn get_config_home() -> Result<PathBuf> {
     get_config_home_from_env(&env::var_os)
 }
 
@@ -81,14 +78,7 @@ pub fn get_config_home() -> PathBuf {
 pub fn get_config_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    let default_paths = OsString::from("/etc/xdg");
-
-    let paths = match (*get_env_var)("XDG_CONFIG_DIRS").iter().next() {
-        Some(p) if p != "" => p.clone(),
-        _ => default_paths
-    };
-
-    split_paths(&paths).collect()
+    get_env_paths_or_default(get_env_var, "XDG_CONFIG_DIRS", "/etc/xdg")
 }
 
 /// Get the config directories.
@@ -102,17 +92,16 @@ pub fn get_config_dirs() -> Vec<PathBuf> {
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
-pub fn get_cache_home_from_env<F>(get_env_var: &F) -> PathBuf
+pub fn get_cache_home_from_env<F>(get_env_var: &F) -> Result<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    getenv_path(get_env_var, "XDG_CACHE_HOME")
-        .unwrap_or(home_dir().unwrap().join(".cache"))
+    get_env_path_or_default(get_env_var, "XDG_CACHE_HOME", ".cache")
 }
 
 /// Get the cache home directory.
 ///
 /// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
-pub fn get_cache_home() -> PathBuf {
+pub fn get_cache_home() -> Result<PathBuf> {
     get_cache_home_from_env(&env::var_os)
 }
 
@@ -123,11 +112,11 @@ pub fn get_cache_home() -> PathBuf {
 pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    getenv_path(get_env_var, "XDG_RUNTIME_DIR")
+    get_env_path(get_env_var, "XDG_RUNTIME_DIR")
 }
 
 pub fn get_runtime_dir() -> Option<PathBuf> {
-    getenv_path(&env::var_os, "XDG_RUNTIME_DIR")
+    get_env_path(&env::var_os, "XDG_RUNTIME_DIR")
 }
 
 /// Check that the value set for ```$XDG_RUNTIME_DIR``` meets the requirements of the specification.
@@ -140,17 +129,32 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// >
 /// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
 #[cfg(unix)]
-pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<bool, std::io::Error> {
+pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> result::Result<bool, io::Error> {
     fs::metadata(path).map(|attr| (attr.permissions().mode() == 0o700))
 }
 
 #[cfg(not(unix))]
-pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<bool, std::io::Error> {
+pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> result::Result<bool, io::Error> {
     Ok(true)
 }
 
+/// Get path from environment variable's value or a default path relative to home_dir
+fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> Result<PathBuf>
+    where F: Fn(&str) -> Option<OsString>
+{
+    match get_env_path(get_env_var, env_var) {
+        Some(p) => Ok(p),
+        None => {
+            match home_dir().map(|p| p.join(default)) {
+                Some(p) => Ok(p),
+                None => Err(From::from(XdgError::NoHomeDir)),
+            }
+        }
+    }
+}
+
 /// Get an environment variable's value as a PathBuf.
-fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
+fn get_env_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
     let path = (*get_env_var)(env_var);
@@ -159,6 +163,19 @@ fn getenv_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
         Some(p) if p.is_absolute() => Some(p.clone()),
         _ => None
     }
+}
+
+fn get_env_paths_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> Vec<PathBuf>
+    where F: Fn(&str) -> Option<OsString>
+{
+    let default_paths = OsString::from(default);
+
+    let paths = match (*get_env_var)(env_var).iter().next() {
+        Some(p) if p != "" => p.clone(),
+        _ => default_paths
+    };
+
+    split_paths(&paths).collect()
 }
 
 #[cfg(test)]
