@@ -116,7 +116,7 @@ pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
 }
 
 pub fn get_runtime_dir() -> Option<PathBuf> {
-    get_env_path(&env::var_os, "XDG_RUNTIME_DIR")
+    get_runtime_dir_from_env(&env::var_os)
 }
 
 /// Check that the value set for ```$XDG_RUNTIME_DIR``` meets the requirements of the specification.
