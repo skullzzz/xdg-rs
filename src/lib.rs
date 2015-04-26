@@ -1,11 +1,10 @@
 #![cfg_attr(unix, feature(fs_ext, libc, convert))]
 
 //! xdg-rs is a utility library to make conforming to the
-//! [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
+//! [XDG basedir specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
-//! Some code borrowed from [rust-xdg](https://github.com/o11c/rust-xdg). ```rust-xdg``` is
-//! currently a more complete implementation of the specification. The APIs provided by
-//! ```rust-xdg``` and ```xdg-rs``` are different.
+//! Alternate implementation and some initial source borrowed from [rust-xdg](https://github.com/o11c/rust-xdg).
+//! The APIs provided by ```rust-xdg``` and ```xdg-rs``` are different.
 
 #[cfg(unix)]
 extern crate libc;
@@ -107,10 +106,10 @@ pub fn get_cache_home() -> Result<PathBuf> {
     get_cache_home_from_env(&env::var_os)
 }
 
-/// Get $XDG_RUNTIME_DIR if found in the environment.
+/// Get ```$XDG_RUNTIME_DIR``` if found in the environment.
 /// This method allows having a custom environment.
 ///
-/// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application.
+/// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application.
 /// to fallback to a location that conforms to the specification.
 pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
@@ -118,9 +117,9 @@ pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
     get_env_path(get_env_var, "XDG_RUNTIME_DIR")
 }
 
-/// Get $XDG_RUNTIME_DIR if found in the environment.
+/// Get ```$XDG_RUNTIME_DIR``` if found in the environment.
 ///
-/// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application.
+/// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application.
 /// to fallback to a location that conforms to the specification.
 pub fn get_runtime_dir() -> Option<PathBuf> {
     get_runtime_dir_from_env(&env::var_os)
