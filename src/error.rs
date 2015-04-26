@@ -20,6 +20,7 @@ pub enum ErrorKind {
 #[derive(Debug)]
 pub enum XdgError {
     NoHomeDir,
+    InvalidPath,
     IncorrectPermissions,
     IncorrectOwner,
 }
@@ -57,5 +58,11 @@ impl From<XdgError> for Error {
 impl From<io::Error> for Error {
     fn from(error: io::Error) -> Error {
         Error { error_kind: ErrorKind::Io(error) }
+    }
+}
+
+impl From<XdgError> for Result<()> {
+    fn from(error: XdgError) -> Result<()> {
+        Err(From::from(error))
     }
 }

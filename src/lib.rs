@@ -1,10 +1,14 @@
-#![cfg_attr(unix, feature(fs_ext))]
+#![cfg_attr(unix, feature(fs_ext, libc, convert))]
 
-//! xdg-rs is a utility library to make conforming to the [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
+//! xdg-rs is a utility library to make conforming to the
+//! [XDG specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
 //! Some code borrowed from [rust-xdg](https://github.com/o11c/rust-xdg). ```rust-xdg``` is
 //! currently a more complete implementation of the specification. The APIs provided by
 //! ```rust-xdg``` and ```xdg-rs``` are different.
+
+#[cfg(unix)]
+extern crate libc;
 
 pub mod error;
 
@@ -14,9 +18,7 @@ use std::convert::From;
 use std::env::{self, home_dir, split_paths};
 use std::ffi::OsString;
 use std::fs;
-use std::io;
 use std::path::{Path, PathBuf};
-use std::result;
 
 #[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
@@ -106,6 +108,7 @@ pub fn get_cache_home() -> Result<PathBuf> {
 }
 
 /// Get $XDG_RUNTIME_DIR if found in the environment.
+/// This method allows having a custom environment.
 ///
 /// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application.
 /// to fallback to a location that conforms to the specification.
@@ -115,27 +118,49 @@ pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
     get_env_path(get_env_var, "XDG_RUNTIME_DIR")
 }
 
+/// Get $XDG_RUNTIME_DIR if found in the environment.
+///
+/// Returns None if ```$XDG_RUNTIME_PATH``` is not set, in which case it is up to the application.
+/// to fallback to a location that conforms to the specification.
 pub fn get_runtime_dir() -> Option<PathBuf> {
     get_runtime_dir_from_env(&env::var_os)
 }
 
-/// Check that the value set for ```$XDG_RUNTIME_DIR``` meets the requirements of the specification.
+/// Check that the value set for ```$XDG_RUNTIME_DIR``` is a valid path, has the correct owner and
+/// permissions.
 ///
-/// Returns Ok(true) if permissions are correct, Ok(false) if permissions are incorrect, or propogates any errors that occurred while checking permissions.
+/// Returns Ok(true) if permissions are correct, Ok(false) if permissions are incorrect,
+/// or propogates any errors that occurred while checking permissions.
 ///
-/// >$XDG_RUNTIME_DIR defines the base directory relative to which user-specific non-essential runtime files and other file objects (such as sockets, named pipes, ...) should be stored. The directory MUST be owned by the user, and he MUST be the only one having read and write access to it. Its Unix access mode MUST be 0700.
+/// >$XDG_RUNTIME_DIR defines the base directory relative to which user-specific non-essential runtime files and
+/// other file objects (such as sockets, named pipes, ...) should be stored. The directory MUST be owned by the
+/// user, and he MUST be the only one having read and write access to it. Its Unix access mode MUST be 0700.
 /// >
-/// >The lifetime of the directory MUST be bound to the user being logged in. It MUST be created when the user first logs in and if the user fully logs out the directory MUST be removed. If the user logs in more than once he should get pointed to the same directory, and it is mandatory that the directory continues to exist from his first login to his last logout on the system, and not removed in between. Files in the directory MUST not survive reboot or a full logout/login cycle.
+/// >The lifetime of the directory MUST be bound to the user being logged in. It MUST be created when the user
+/// first logs in and if the user fully logs out the directory MUST be removed. If the user logs in more than
+/// once he should get pointed to the same directory, and it is mandatory that the directory continues to exist
+/// from his first login to his last logout on the system, and not removed in between. Files in the directory
+/// MUST not survive reboot or a full logout/login cycle.
 /// >
-/// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping, file change notifications, a reliable hard link count must be supported, and no restrictions on the file name character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that your files are not removed, they should have their access time timestamp modified at least once every 6 hours of monotonic time or the 'sticky' bit should be set on the file.
+/// >The directory MUST be on a local file system and not shared with any other system. The directory MUST by
+/// fully-featured by the standards of the operating system. More specifically, on Unix-like operating systems
+/// AF_UNIX sockets, symbolic links, hard links, proper permissions, file locking, sparse files, memory mapping,
+/// file change notifications, a reliable hard link count must be supported, and no restrictions on the file name
+/// character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that
+/// your files are not removed, they should have their access time timestamp modified at least once every 6 hours
+/// of monotonic time or the 'sticky' bit should be set on the file.
 #[cfg(unix)]
-pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> result::Result<bool, io::Error> {
-    fs::metadata(path).map(|attr| (attr.permissions().mode() == 0o700))
+pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
+    fs::metadata(&path)
+        .or_else(|e| Err(From::from(e)))
+        .map(|attr| (attr.permissions().mode()))
+        .and_then(inner::check_permissions)
+        .and(inner::test_dir_uid_is_current_user(path.as_ref()))
 }
 
 #[cfg(not(unix))]
-pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> result::Result<bool, io::Error> {
-    Ok(true)
+pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
+    Ok(())
 }
 
 /// Get path from environment variable's value or a default path relative to home_dir
@@ -143,8 +168,8 @@ fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> 
     where F: Fn(&str) -> Option<OsString>
 {
     get_env_path(get_env_var, env_var)
-        .or(home_dir().map(|p| p.join(default))) // if env_var wasn't found use default
-        .ok_or(From::from(XdgError::NoHomeDir))  // return path if valid, else error
+        .or(home_dir().map(|p| p.join(default)))
+        .ok_or(From::from(XdgError::NoHomeDir))
 }
 
 /// Get an environment variable's value as a PathBuf.
@@ -168,6 +193,45 @@ fn get_env_paths_or_default<F>(get_env_var: &F, env_var: &str, default: &str) ->
         .unwrap_or(OsString::from(default));
 
     split_paths(&path_string).collect()
+}
+
+#[cfg(unix)]
+mod inner {
+    use super::*;
+
+    use libc::funcs::posix88::stat_::stat;
+    use libc::funcs::posix88::unistd::getuid;
+    use libc::types::os::arch::posix01::stat as Stat;
+    use std::ffi::CString;
+    use std::mem;
+    use std::path::Path;
+
+    pub fn test_dir_uid_is_current_user(path: &Path) -> Result<()> {
+        let p = try!(cstr(path));
+        unsafe {
+            let mut s: Stat = mem::zeroed();
+            stat(p.as_ptr(), &mut s);
+
+            let uid = getuid();
+
+            match uid == s.st_uid {
+                true => Ok(()),
+                false => From::from(XdgError::IncorrectOwner)
+            }
+        }
+    }
+
+    pub fn check_permissions(permissions: i32) -> Result<()> {
+        match permissions == 0o700 {
+            true => Ok(()),
+            false => From::from(XdgError::IncorrectPermissions)
+        }
+    }
+
+    fn cstr(path: &Path) -> Result<CString> {
+        path.as_os_str().to_cstring()
+            .ok_or(From::from(XdgError::InvalidPath))
+    }
 }
 
 #[cfg(test)]
