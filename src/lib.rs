@@ -142,15 +142,9 @@ pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> result::Result<bool, io::Err
 fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> Result<PathBuf>
     where F: Fn(&str) -> Option<OsString>
 {
-    match get_env_path(get_env_var, env_var) {
-        Some(p) => Ok(p),
-        None => {
-            match home_dir().map(|p| p.join(default)) {
-                Some(p) => Ok(p),
-                None => Err(From::from(XdgError::NoHomeDir)),
-            }
-        }
-    }
+    get_env_path(get_env_var, env_var)
+        .or(home_dir().map(|p| p.join(default))) // if env_var wasn't found use default
+        .ok_or(From::from(XdgError::NoHomeDir))  // return path if valid, else error
 }
 
 /// Get an environment variable's value as a PathBuf.
