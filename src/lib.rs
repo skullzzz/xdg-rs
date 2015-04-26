@@ -129,8 +129,8 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// Check that the value set for ```$XDG_RUNTIME_DIR``` is a valid path, has the correct owner and
 /// permissions.
 ///
-/// Returns Ok(true) if permissions are correct, Ok(false) if permissions are incorrect,
-/// or propogates any errors that occurred while checking permissions.
+/// Returns Ok(()) if path is valid, owner is current uid and has permissions 0o700, or propogates any errors
+/// that occurred.
 ///
 /// >$XDG_RUNTIME_DIR defines the base directory relative to which user-specific non-essential runtime files and
 /// other file objects (such as sockets, named pipes, ...) should be stored. The directory MUST be owned by the
