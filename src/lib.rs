@@ -220,7 +220,7 @@ mod inner {
         }
     }
 
-    pub fn check_permissions(permissions: i32) -> Result<()> {
+    pub fn check_permissions(permissions: u32) -> Result<()> {
         match permissions == 0o700 {
             true => Ok(()),
             false => From::from(XdgError::IncorrectPermissions)
