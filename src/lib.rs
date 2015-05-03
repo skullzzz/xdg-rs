@@ -109,7 +109,7 @@ pub fn get_cache_home() -> Result<PathBuf> {
 /// Get ```$XDG_RUNTIME_DIR``` if found in the environment.
 /// This method allows having a custom environment.
 ///
-/// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application.
+/// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application
 /// to fallback to a location that conforms to the specification.
 pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
     where F: Fn(&str) -> Option<OsString>
@@ -119,7 +119,7 @@ pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
 
 /// Get ```$XDG_RUNTIME_DIR``` if found in the environment.
 ///
-/// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application.
+/// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application
 /// to fallback to a location that conforms to the specification.
 pub fn get_runtime_dir() -> Option<PathBuf> {
     get_runtime_dir_from_env(&env::var_os)
