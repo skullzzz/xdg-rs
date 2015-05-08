@@ -6,7 +6,7 @@ authors = ["skullzzz <kiran.eighty9@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/skullzzz/xdg-rs"
 documentation = "http://skullzzz.github.io/xdg-rs/xdg/index.html"
-keywords = ["xdg"]
+keywords = ["xdg", "basedir"]
 readme = "README.md"
 description = "Library to help with the XDG basedir spec"
 
