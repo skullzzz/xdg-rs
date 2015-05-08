@@ -63,6 +63,6 @@ impl From<io::Error> for Error {
 
 impl From<XdgError> for Result<()> {
     fn from(error: XdgError) -> Result<()> {
-        Err(From::from(error))
+        Err(Error::from(error))
     }
 }

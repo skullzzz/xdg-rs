@@ -151,7 +151,7 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 #[cfg(unix)]
 pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
     fs::metadata(&path)
-        .or_else(|e| Err(From::from(e)))
+        .or_else(|e| Err(Error::from(e)))
         .map(|attr| (attr.permissions().mode()))
         .and_then(inner::check_permissions)
         .and(inner::test_dir_uid_is_current_user(path.as_ref()))
@@ -168,7 +168,7 @@ fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> 
 {
     get_env_path(get_env_var, env_var)
         .or(home_dir().map(|p| p.join(default)))
-        .ok_or(From::from(XdgError::NoHomeDir))
+        .ok_or(Error::from(XdgError::NoHomeDir))
 }
 
 /// Get an environment variable's value as a PathBuf.
@@ -215,7 +215,7 @@ mod inner {
 
             match uid == s.st_uid {
                 true => Ok(()),
-                false => From::from(XdgError::IncorrectOwner)
+                false => Result::from(XdgError::IncorrectOwner)
             }
         }
     }
@@ -223,13 +223,13 @@ mod inner {
     pub fn check_permissions(permissions: u32) -> Result<()> {
         match permissions == 0o700 {
             true => Ok(()),
-            false => From::from(XdgError::IncorrectPermissions)
+            false => Result::from(XdgError::IncorrectPermissions)
         }
     }
 
     fn cstr(path: &Path) -> Result<CString> {
         path.as_os_str().to_cstring()
-            .ok_or(From::from(XdgError::InvalidPath))
+            .ok_or(Error::from(XdgError::InvalidPath))
     }
 }
 
