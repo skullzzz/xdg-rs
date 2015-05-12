@@ -26,8 +26,8 @@ use std::os::unix::fs::PermissionsExt;
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_DATA_HOME``` is not set, it returns ```$HOME/.local/share```.
-pub fn get_data_home_from_env<F>(get_env_var: &F) -> Result<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+pub fn get_data_home_from_env<'a, F>(get_env_var: &'a F) -> Result<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_path_or_default(get_env_var, "XDG_DATA_HOME", ".local/share")
 }
@@ -43,8 +43,8 @@ pub fn get_data_home() -> Result<PathBuf> {
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_DATA_DIRS``` is not set, it returns ```[/usr/local/share, /usr/share]```.
-pub fn get_data_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+pub fn get_data_dirs_from_env<'a, F>(get_env_var: &'a F) -> Vec<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_paths_or_default(get_env_var, "XDG_DATA_DIRS", "/usr/local/share:/usr/share")
 }
@@ -60,8 +60,8 @@ pub fn get_data_dirs() -> Vec<PathBuf> {
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CONFIG_HOME``` is not set, it returns ```$HOME/.config```.
-pub fn get_config_home_from_env<F>(get_env_var: &F) -> Result<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+pub fn get_config_home_from_env<'a, F>(get_env_var: &'a F) -> Result<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_path_or_default(get_env_var, "XDG_CONFIG_HOME", ".config")
 }
@@ -76,8 +76,8 @@ pub fn get_config_home() -> Result<PathBuf> {
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CONFIG_DIRS``` is not set, it returns ```[/etc/xdg]```.
-pub fn get_config_dirs_from_env<F>(get_env_var: &F) -> Vec<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+pub fn get_config_dirs_from_env<'a, F>(get_env_var: &'a F) -> Vec<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_paths_or_default(get_env_var, "XDG_CONFIG_DIRS", "/etc/xdg")
 }
@@ -93,8 +93,8 @@ pub fn get_config_dirs() -> Vec<PathBuf> {
 /// This method allows having a custom environment.
 ///
 /// If ```$XDG_CACHE_HOME``` is not set, it returns ```$HOME/.cache```.
-pub fn get_cache_home_from_env<F>(get_env_var: &F) -> Result<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+pub fn get_cache_home_from_env<'a, F>(get_env_var: &'a F) -> Result<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_path_or_default(get_env_var, "XDG_CACHE_HOME", ".cache")
 }
@@ -111,8 +111,8 @@ pub fn get_cache_home() -> Result<PathBuf> {
 ///
 /// Returns None if ```$XDG_RUNTIME_DIR``` is not set, in which case it is up to the application
 /// to fallback to a location that conforms to the specification.
-pub fn get_runtime_dir_from_env<F>(get_env_var: &F) -> Option<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+pub fn get_runtime_dir_from_env<'a, F>(get_env_var: &'a F) -> Option<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_path(get_env_var, "XDG_RUNTIME_DIR")
 }
@@ -163,8 +163,8 @@ pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
 }
 
 /// Get path from environment variable's value or a default path relative to home_dir
-fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> Result<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+fn get_env_path_or_default<'a, F>(get_env_var: &'a F, env_var: &'a str, default: &'a str) -> Result<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     get_env_path(get_env_var, env_var)
         .or(home_dir().map(|p| p.join(default)))
@@ -172,18 +172,18 @@ fn get_env_path_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> 
 }
 
 /// Get an environment variable's value as a PathBuf.
-fn get_env_path<F>(get_env_var: &F, env_var: &str) -> Option<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+fn get_env_path<'a, F>(get_env_var: &'a F, env_var: &'a str) -> Option<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
-    (*get_env_var)(env_var)
+    get_env_var(env_var)
         .map(PathBuf::from)
         .into_iter()
         .filter(|x| x.is_absolute())
         .next()
 }
 
-fn get_env_paths_or_default<F>(get_env_var: &F, env_var: &str, default: &str) -> Vec<PathBuf>
-    where F: Fn(&str) -> Option<OsString>
+fn get_env_paths_or_default<'a, F>(get_env_var: &'a F, env_var: &'a str, default: &'a str) -> Vec<PathBuf>
+    where F: Fn(&'a str) -> Option<OsString>
 {
     let path_string = (*get_env_var)(env_var)
         .into_iter()
