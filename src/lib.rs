@@ -1,4 +1,4 @@
-#![cfg_attr(unix, feature(fs_ext, libc, convert))]
+#![cfg_attr(all(unix, feature = "nightly"), feature(fs_ext, libc, convert))]
 
 //! xdg-rs is a utility library to make conforming to the
 //! [XDG basedir specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
@@ -6,7 +6,7 @@
 //! Alternate implementation and some initial source borrowed from [rust-xdg](https://github.com/o11c/rust-xdg).
 //! The APIs provided by ```rust-xdg``` and ```xdg-rs``` are different.
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "nightly"))]
 extern crate libc;
 
 pub mod error;
@@ -16,10 +16,11 @@ pub use error::*;
 use std::convert::From;
 use std::env::{self, home_dir, split_paths};
 use std::ffi::OsString;
-use std::fs;
 use std::path::{Path, PathBuf};
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "nightly"))]
+use std::fs;
+#[cfg(all(unix, feature = "nightly"))]
 use std::os::unix::fs::PermissionsExt;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
@@ -148,7 +149,7 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that
 /// your files are not removed, they should have their access time timestamp modified at least once every 6 hours
 /// of monotonic time or the 'sticky' bit should be set on the file.
-#[cfg(unix)]
+#[cfg(all(unix, feature = "nightly"))]
 pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
     fs::metadata(&path)
         .or_else(|e| Err(Error::from(e)))
@@ -157,8 +158,8 @@ pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
         .and(inner::test_dir_uid_is_current_user(path.as_ref()))
 }
 
-#[cfg(not(unix))]
-pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
+#[cfg(not(all(unix, feature = "nightly")))]
+pub fn test_runtime_dir<P: AsRef<Path>>(_path: P) -> Result<()> {
     Ok(())
 }
 
@@ -194,7 +195,7 @@ fn get_env_paths_or_default<'a, F>(get_env_var: &'a F, env_var: &'a str, default
     split_paths(&path_string).collect()
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, feature = "nightly"))]
 mod inner {
     use super::*;
 
