@@ -8,7 +8,7 @@ xdg-rs
 xdg-rs is a utility library to make conforming to the
 [XDG basedir specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 
-#Example
+##Example
 ```rust
 #![cfg(unix)]
 extern crate xdg;
@@ -19,6 +19,14 @@ use std::path::PathBuf;
 ...
 let data_home: PathBuf = try!(xdg::get_data_home());
 ...
+```
+
+Some functions require the crate to be compiled with nightly rustc build and unstable libstd features. Build with the 'nightly' feature toggle to enable these functions.
+
+```toml
+[dependencies.xdg-rs]
+version = "0.1.2"
+features = ["nightly"]
 ```
 
 Alternate implementation and some initial source borrowed from [rust-xdg](https://github.com/o11c/rust-xdg).

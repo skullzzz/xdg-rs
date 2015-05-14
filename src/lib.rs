@@ -171,6 +171,11 @@ pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
         .and(inner::test_dir_uid_is_current_user(path.as_ref()))
 }
 
+/// Check that the value set for ```$XDG_RUNTIME_DIR``` is a valid path, has the correct owner and
+/// permissions.
+///
+/// Using this function currently requires unstable libstd features. Build xdg-rs with the
+/// 'nightly' feature to enable these unstable features.
 #[cfg(not(feature = "nightly"))]
 pub fn test_runtime_dir<P: AsRef<Path>>(_path: P) -> Result<()> {
     Ok(())
