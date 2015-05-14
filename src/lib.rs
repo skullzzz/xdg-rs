@@ -213,7 +213,7 @@ fn get_env_paths_or_default<'a, F>(get_env_var: &'a F, env_var: &'a str, default
     split_paths(&path_string).collect()
 }
 
-#[cfg(all(unix, feature = "nightly"))]
+#[cfg(feature = "nightly")]
 mod inner {
     use super::*;
 
