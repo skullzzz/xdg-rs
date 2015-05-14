@@ -3,6 +3,19 @@
 //! xdg-rs is a utility library to make conforming to the
 //! [XDG basedir specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 //!
+//! #Example
+//! ```ignore
+//! #![cfg(unix)]
+//! extern crate xdg;
+//!
+//! #![cfg(unix)]
+//! use xdg;
+//! use std::path::PathBuf;
+//! ...
+//! let data_home: PathBuf = try!(xdg::get_data_home());
+//! ...
+//! ```
+//!
 //! Alternate implementation and some initial source borrowed from [rust-xdg](https://github.com/o11c/rust-xdg).
 //! The APIs provided by ```rust-xdg``` and ```xdg-rs``` are different.
 
