@@ -1,4 +1,4 @@
-#![cfg_attr(feature = "nightly", feature(fs_ext, libc, convert))]
+#![cfg_attr(feature = "unstable", feature(fs_ext, libc, convert))]
 
 //! xdg-rs is a utility library to make conforming to the
 //! [XDG basedir specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
@@ -19,7 +19,7 @@
 //! Alternate implementation and some initial source borrowed from [rust-xdg](https://github.com/o11c/rust-xdg).
 //! The APIs provided by ```rust-xdg``` and ```xdg-rs``` are different.
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 extern crate libc;
 
 pub mod error;
@@ -29,12 +29,14 @@ pub use error::*;
 use std::convert::From;
 use std::env::{self, home_dir, split_paths};
 use std::ffi::OsString;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 use std::fs;
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 use std::os::unix::fs::PermissionsExt;
+#[cfg(feature = "unstable")]
+use std::path::Path;
 
 /// Get the data home directory given a closure that returns the the value of an environment variable.
 /// This method allows having a custom environment.
@@ -162,23 +164,13 @@ pub fn get_runtime_dir() -> Option<PathBuf> {
 /// character set should be imposed. Files in this directory MAY be subjected to periodic clean-up. To ensure that
 /// your files are not removed, they should have their access time timestamp modified at least once every 6 hours
 /// of monotonic time or the 'sticky' bit should be set on the file.
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 pub fn test_runtime_dir<P: AsRef<Path>>(path: P) -> Result<()> {
     fs::metadata(&path)
         .or_else(|e| Err(Error::from(e)))
         .map(|attr| (attr.permissions().mode()))
         .and_then(inner::check_permissions)
         .and(inner::test_dir_uid_is_current_user(path.as_ref()))
-}
-
-/// Check that the value set for ```$XDG_RUNTIME_DIR``` is a valid path, has the correct owner and
-/// permissions.
-///
-/// Using this function currently requires unstable libstd features. Build xdg-rs with the
-/// 'nightly' feature to enable these unstable features.
-#[cfg(not(feature = "nightly"))]
-pub fn test_runtime_dir<P: AsRef<Path>>(_path: P) -> Result<()> {
-    Ok(())
 }
 
 /// Get path from environment variable's value or a default path relative to home_dir
@@ -213,7 +205,7 @@ fn get_env_paths_or_default<'a, F>(get_env_var: &'a F, env_var: &'a str, default
     split_paths(&path_string).collect()
 }
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 mod inner {
     use super::*;
 

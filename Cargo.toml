@@ -14,4 +14,4 @@ description = "Library to help with the XDG basedir spec"
 name = "xdg"
 
 [features]
-nightly = []
+unstable = []

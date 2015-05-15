@@ -1,15 +1,26 @@
 language: rust
+# run builds for both the nightly and beta branch
+rust:
+    - stable
+    - nightly
+
+# load travis-cargo
+before_script:
+    - |
+        pip install 'travis-cargo<0.2' --user &&
+        export PATH=$HOME/.local/bin:$PATH
+
+# the main build
 script:
-- cargo build --verbose
-- cargo test --verbose
-- cargo doc
-after_success: |
-  [ $TRAVIS_BRANCH = master ] &&
-  [ $TRAVIS_PULL_REQUEST = false ] &&
-  echo '<meta http-equiv=refresh content=0;url=xdg/index.html>' > target/doc/index.html &&
-  sudo pip install ghp-import &&
-  ghp-import -n target/doc &&
-  git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
+    - |
+        travis-cargo build &&
+        travis-cargo test &&
+        travis-cargo --only stable doc
+after_success:
+    # upload the documentation from the build with beta (automatically only actually
+    # runs on the master branch)
+    - travis-cargo --only stable doc-upload
+
 env:
   global:
     secure: aq1DU23MPBMcmBOIzQssyArz+G2ykAuNzAeMmQAyylSwkVig/f2Hpdppg0opEZhEsXQe8SnNr4yQ5iHF/aI/5Z0bDzxcNHIWskZEtHB0P0toPi+X7clMpndwrBaGoRp6jCg3w6jW2jwvJeHI4dxW+J4is64o1Ks823kqk0mh3is=
