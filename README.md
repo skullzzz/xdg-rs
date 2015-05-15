@@ -8,7 +8,7 @@ xdg-rs
 xdg-rs is a utility library to make conforming to the
 [XDG basedir specification](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html) easier.
 
-##Example
+#Example
 ```rust
 #![cfg(unix)]
 extern crate xdg;
@@ -29,8 +29,8 @@ version = "0.1.2"
 features = ["unstable"]
 ```
 
-Current unstable features:
-    - Test runtime directory: A function to check if a directory satisfies the XDG spec's requirements of a runtime directory.
+#Current unstable features:
+- Test runtime directory: A function to check if a directory satisfies the XDG spec's requirements of a runtime directory.
 
 Alternate implementation and some initial source borrowed from [rust-xdg](https://github.com/o11c/rust-xdg).
 The APIs provided by ```rust-xdg``` and ```xdg-rs``` are different.
