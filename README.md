@@ -1,3 +1,5 @@
+**This library has been moved to [xdg-basedir](https://github.com/kiran-kp/xdg-basedir).**
+
 xdg-rs
 ====
 
@@ -28,7 +30,7 @@ The default build of xdg-rs does not use any unstable libstd features. To enable
 
 ```toml
 [dependencies.xdg-rs]
-version = "0.1.2"
+version = "0.1.3"
 features = ["unstable"]
 ```
 

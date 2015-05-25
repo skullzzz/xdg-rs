@@ -1,14 +1,15 @@
 [package]
 
 name = "xdg-rs"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["skullzzz <kiran.eighty9@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/skullzzz/xdg-rs"
 documentation = "http://skullzzz.github.io/xdg-rs/xdg/index.html"
 keywords = ["xdg", "basedir"]
 readme = "README.md"
-description = "Library to help with the XDG basedir spec"
+description = "[This crate is no longer maintained. Please use xdg-basedir instead] Library to help with the XDG basedir spec"
+build = "build.rs"
 
 [lib]
 name = "xdg"
